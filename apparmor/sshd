@@ -1,0 +1,83 @@
+# Last Modified: Mon Jan 23 10:21:56 2023
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for sshd
+# ###AUTHOR###
+# ###COPYRIGHT###
+# ###COMMENT###
+# No template variables specified
+
+
+/usr/sbin/sshd {
+  #include <abstractions/authentication>
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/libpam-systemd>
+  #include <abstractions/nameservice>
+  #include <abstractions/wutmp>
+
+  capability sys_chroot,
+  capability sys_resource,
+  capability sys_tty_config,
+  capability net_bind_service,
+  capability chown,
+  capability fowner,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability audit_control,
+  capability audit_write,
+  capability dac_override,
+  capability dac_read_search,
+  capability sys_ptrace,
+
+
+  deny capability net_admin,
+
+  # needed when /proc is mounted with hidepid>=1
+  ptrace (read,trace) peer="unconfined",
+
+  /dev/ptmx rw,
+  /dev/pts/[0-9]* rw,
+  /dev/urandom r,
+  /etc/default/locale r,
+  /etc/environment r,
+  /etc/hosts.allow r,
+  /etc/hosts.deny r,
+  /etc/modules.conf r,
+  /etc/security/** r,
+  /etc/ssh/** r,
+  /etc/ssl/openssl.cnf r,
+  /usr/sbin/sshd mrix,
+  /usr/share/ssh/blacklist.* r,
+  /var/log/btmp rw,
+  owner /{,var/}run/sshd{,.init}.pid wl,
+
+  @{HOME}/.ssh/authorized_keys{,2} r,
+
+  @{PROC}/cmdline r,
+  @{PROC}/1/environ r,
+
+  # pid of the just-logged in user's shell
+  @{PROC}/@{pids}/fd/ r,    
+
+  owner @{PROC}/@{pid}/loginuid rw,
+  owner @{PROC}/@{pid}/limits r,
+  owner @{PROC}/@{pid}/uid_map r,
+  owner @{PROC}/@{pid}/mounts r,
+  owner @{PROC}/@{pid}/oom_adj rw,
+  owner @{PROC}/@{pid}/oom_score_adj rw,
+
+
+  /{usr/,}bin/ash      Uxr,
+  /{usr/,}bin/bash     Uxr,
+  /{usr/,}bin/dash     Uxr,
+  /{usr/,}bin/sh       Uxr,
+
+  # abstractions
+  /{usr/,}sbin/nologin Uxr,
+  /{usr/,}bin/false    Uxr,
+
+
+}
